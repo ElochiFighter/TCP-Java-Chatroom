@@ -2,7 +2,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class Message {
-    public static final String DATE = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yy"));
+    public final String DATE = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yy"));
     public String message;
     public String name;
 
