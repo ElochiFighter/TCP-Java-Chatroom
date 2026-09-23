@@ -14,6 +14,7 @@ public class ChatServer {
         System.out.println("Attempting server host on port " + port +".");
 
         try (ServerSocket serverSocket = new ServerSocket(port)){
+            System.out.println("Server started on port " + port + ". Waiting for clients to connect...");
             while (true) { 
                 Socket clientSocket = serverSocket.accept();
                 ClientHandler clientHandler = new ClientHandler(clientSocket);
