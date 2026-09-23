@@ -1,85 +1,66 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.HashSet;
-import java.util.Scanner;
-import java.util.Set;
+import module java.base;
 
 public class ChatServer {
-    private static final Scanner scanner = new Scanner(System.in);
-    private static final int PORT = scanner.nextInt();
-    private static final Set<PrintWriter> clientWriters = new HashSet<>(); //Keep track of Clients
+    private static int PORT;
+    private static final Set<ClientHandler> activeClients = Collections.newSetFromMap(new ConcurrentHashMap<>()); //Keep track of Clients
 
     public static void main(String[] args) {
-        System.out.println("Attempting server host on port " + PORT +".");
+        PORT = Integer.parseInt(IO.readln("Enter port: "));
+
+        IO.println("Attempting server host on port " + PORT +".");
 
         try (ServerSocket serverSocket = new ServerSocket(PORT)){
-            System.out.println("Server started on port " + PORT + ". Waiting for clients to connect...");
+            IO.println("Server started on port " + PORT + ". Waiting for clients to connect...");
             while (true) { 
                 Socket clientSocket = serverSocket.accept();
                 ClientHandler clientHandler = new ClientHandler(clientSocket);
-                new Thread(clientHandler).start();
-                System.out.println("New client connected: " + clientSocket.getRemoteSocketAddress());
+                Thread.startVirtualThread(clientHandler);
+                IO.println("New client connected: " + clientSocket.getRemoteSocketAddress());
             }
         } catch (IOException e) {
-            System.out.println("Server error: " + e.getMessage());
+            IO.println("Server error: " + e.getMessage());
         }
     }
 
-    public static void broadcast(Message message) {
-        synchronized (clientWriters) {
-            for (PrintWriter writer : clientWriters) {
-                writer.println(message);
-            }
+    public static void broadcast(Message message) throws IOException {
+        for (ClientHandler client : activeClients) {
+            client.oos.writeObject(message);
         }
     }
 
     private static class ClientHandler implements Runnable {
-    private BufferedReader reader;
-    private PrintWriter writer;
-    private final Socket socket;
+        private final Socket socket;
+        private final ObjectOutputStream oos;
 
-    public ClientHandler(Socket socket) {
-        this.socket = socket;
-    }
+        public ClientHandler(Socket socket) throws IOException {
+            this.socket = socket;
+            oos = new ObjectOutputStream(socket.getOutputStream());
+        }
 
-    @Override
-    public void run() {
-        try {
-            reader = new BufferedReader(new java.io.InputStreamReader(socket.getInputStream()));
-            writer = new PrintWriter(socket.getOutputStream(), true);
-            synchronized (clientWriters) {
-                clientWriters.add(writer);
-            }
+        @Override
+        public void run() {
+            activeClients.add(this);
+            try (oos; var ois = new ObjectInputStream(socket.getInputStream())) {
+                while (true) {
+                    Message msg = (Message) ois.readObject();
+                    if ("/quit".equals(msg.payload())) {
+                        IO.println("Client disconnected: " + socket.getRemoteSocketAddress());
+                        break;
+                    }
 
-            String messageText;
-            while ((messageText = reader.readLine()) != null) {
-                if (messageText.equalsIgnoreCase("/quit")) {
-                    System.out.println("Client disconnected: " + socket.getRemoteSocketAddress());
-                    break;
+                    IO.println("Received message from " + socket.getRemoteSocketAddress() + ": " + msg.payload());
+
+                    Message message = new Message(socket.getRemoteSocketAddress().toString(), msg.payload(), msg.instant());
+                    IO.println(message);
+                    broadcast(message);
                 }
-
-                System.out.println("Received message from " + socket.getRemoteSocketAddress() + ": " + messageText);
-
-                Message message = new Message(socket.getRemoteSocketAddress().toString(), messageText);
-                broadcast(message);
+            } catch (IOException | ClassNotFoundException e) {
+                IO.println("Error handling client: " + e.getMessage());
+            } finally {
+                activeClients.remove(this);
+                IO.println("Cleaned up connection for: " + socket.getRemoteSocketAddress());
             }
-        } catch (IOException e) {
-            System.out.println("Error handling client: " + e.getMessage());
-        } finally {
-            synchronized (clientWriters) {
-                clientWriters.remove(writer);
-            }
-            try {
-                socket.close();
-            } catch (IOException e) {
-                System.out.println("Error closing socket: " + e.getMessage());
-            }
-            System.out.println("Cleaned up connection for: " + socket.getRemoteSocketAddress());
         }
     }
-}
 
 }

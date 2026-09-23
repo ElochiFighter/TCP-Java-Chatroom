@@ -1,15 +1,10 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.Socket;
+import module java.base;
 
 public class ChatClient {
     private final String serverAddress;
     private final int serverPort;
     private final String username;
-    private Socket socket;
-    private BufferedReader reader;
-    private PrintWriter writer;
+    private ObjectInputStream ois;
 
     public ChatClient(String username) {
         this.serverAddress = "localhost";
@@ -24,48 +19,37 @@ public class ChatClient {
     }
 
     public void start() {
-        try {
-            socket = new Socket(serverAddress, serverPort);
-            reader = new BufferedReader(new java.io.InputStreamReader(socket.getInputStream()));
-            writer = new PrintWriter(socket.getOutputStream(), true);
+        try (var socket = new Socket(serverAddress, serverPort)) {
+            ois = new ObjectInputStream(socket.getInputStream());
+            var oos = new ObjectOutputStream(socket.getOutputStream());
 
             // Start a thread to listen for messages from the server
-            new Thread(new ServerListener()).start();
+            Thread.startVirtualThread(new ServerListener());
 
             // Read messages from the console and send them to the server
-            BufferedReader consoleReader = new BufferedReader(new java.io.InputStreamReader(System.in));
             String messageText;
-            while ((messageText = consoleReader.readLine()) != null) {
-                if (messageText.equalsIgnoreCase("/quit")) {
-                    System.out.println("Disconnecting from the chat...");
+            while ((messageText = IO.readln()) != null) {
+                if ("/quit".equals(messageText)) {
+                    IO.println("Disconnecting from the chat...");
                     break;
                 }
-                Message message = new Message(messageText, username);
-                writer.println(message.toString());
+                Message message = new Message(username, messageText);
+                oos.writeObject(message);
             }
         } catch (IOException e) {
-            System.out.println("Client error: " + e.getMessage());
-        } finally {
-            try {
-                if (socket != null) socket.close();
-                if (reader != null) reader.close();
-                if (writer != null) writer.close();
-            } catch (IOException e) {
-                System.out.println("Error closing resources: " + e.getMessage());
-            }
+            IO.println("Client error: " + e.getMessage());
         }
     }
 
     private class ServerListener implements Runnable {
         @Override
         public void run() {
-            String messageText;
             try {
-                while ((messageText = reader.readLine()) != null) {
-                    System.out.println(messageText);
+                while (true) {
+                    IO.println(ois.readObject());
                 }
-            } catch (IOException e) {
-                System.out.println("Error reading from server: " + e.getMessage());
+            } catch (IOException | ClassNotFoundException e) {
+                IO.println("Error reading from server: " + e.getMessage());
             }
         }
     }
