@@ -6,18 +6,21 @@ import java.net.Socket;
 public class ChatClient {
     private final String serverAddress;
     private final int serverPort;
+    private final String username;
     private Socket socket;
     private BufferedReader reader;
     private PrintWriter writer;
-    
-    public ChatClient() {
-        this.serverAddress = "localhost"; // Default server address
-        this.serverPort = 12345; // Default server port
+
+    public ChatClient(String username) {
+        this.serverAddress = "localhost";
+        this.serverPort = 12345;
+        this.username = username;
     }
 
-    public ChatClient(String serverAddress, int serverPort) {
+    public ChatClient(String serverAddress, int serverPort, String username) {
         this.serverAddress = serverAddress;
         this.serverPort = serverPort;
+        this.username = username;
     }
 
     public void start() {
@@ -37,7 +40,8 @@ public class ChatClient {
                     System.out.println("Disconnecting from the chat...");
                     break;
                 }
-                writer.println(messageText);
+                Message message = new Message(messageText, username);
+                writer.println(message.toString());
             }
         } catch (IOException e) {
             System.out.println("Client error: " + e.getMessage());
