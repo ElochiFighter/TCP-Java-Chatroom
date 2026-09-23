@@ -1,16 +1,16 @@
 import module java.base;
 
 public class ChatServer {
-    private static int PORT;
+    private static int port;
     private static final Set<ClientHandler> activeClients = Collections.newSetFromMap(new ConcurrentHashMap<>()); //Keep track of Clients
 
     public static void main(String[] args) {
-        PORT = Integer.parseInt(IO.readln("Enter port: "));
+        port = Integer.parseInt(IO.readln("Enter port: "));
 
-        IO.println("Attempting server host on port " + PORT +".");
+        IO.println("Attempting server host on port " + port +".");
 
-        try (ServerSocket serverSocket = new ServerSocket(PORT)){
-            IO.println("Server started on port " + PORT + ". Waiting for clients to connect...");
+        try (ServerSocket serverSocket = new ServerSocket(port)){
+            IO.println("Server started on port " + port + ". Waiting for clients to connect...");
             while (true) { 
                 Socket clientSocket = serverSocket.accept();
                 ClientHandler clientHandler = new ClientHandler(clientSocket);
