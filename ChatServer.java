@@ -9,14 +9,14 @@ import java.util.Set;
 
 public class ChatServer {
     private static final Scanner scanner = new Scanner(System.in);
-    private static final int PORT = scanner.nextInt();
     private static final Set<PrintWriter> clientWriters = new HashSet<>(); //Keep track of Clients
 
     public static void main(String[] args) {
-        System.out.println("Attempting server host on port " + PORT +".");
+        int port = scanner.nextInt();
+        System.out.println("Attempting server host on port " + port +".");
 
-        try (ServerSocket serverSocket = new ServerSocket(PORT)){
-            System.out.println("Server started on port " + PORT + ". Waiting for clients to connect...");
+        try (ServerSocket serverSocket = new ServerSocket(port)){
+            System.out.println("Server started on port " + port + ". Waiting for clients to connect...");
             while (true) { 
                 Socket clientSocket = serverSocket.accept();
                 ClientHandler clientHandler = new ClientHandler(clientSocket);
