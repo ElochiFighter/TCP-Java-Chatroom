@@ -16,6 +16,8 @@ public class ChatServer {
         try (ServerSocket serverSocket = new ServerSocket(port)){
             while (true) { 
                 Socket clientSocket = serverSocket.accept();
+                ClientHandler clientHandler = new ClientHandler(clientSocket);
+                new Thread(clientHandler).start();
                 System.out.println("New client connected: " + clientSocket.getRemoteSocketAddress());
             }
         } catch (IOException e) {
