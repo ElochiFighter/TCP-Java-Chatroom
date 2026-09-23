@@ -2,7 +2,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class Message {
-    public static final String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yy"));
+    public static final String DATE = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yy"));
     public String message;
     public String name;
 
@@ -12,12 +12,12 @@ public class Message {
     }
 
     public String getDate() {
-        return date;
+        return DATE;
     }
 
     @Override
     public String toString() {
-        return date + " " + message + " -" + name;
+        return DATE + " " + message + " -" + name;
     }
 
 }
