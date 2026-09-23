@@ -1,5 +1,5 @@
-## TCP Java Chatroom
+# TCP Java Chatroom
 Simple Transmission Control Protocol-based chatroom I made as a networking project and to better understand ServerSockets.
 
-# Commands:
+## Commands:
 **/quit** - Disconnect from the server
