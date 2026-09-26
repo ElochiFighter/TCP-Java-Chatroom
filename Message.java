@@ -1,23 +1,14 @@
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.io.Serializable;
+import java.time.Instant;
+import java.time.ZoneId;
 
-public class Message {
-    public final String DATE = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yy"));
-    public String message;
-    public String name;
-
-    public Message(String message, String name) {
-        this.message = message;
-        this.name = name;
-    }
-
-    public String getDate() {
-        return DATE;
+public record Message(String name, String payload, Instant instant) implements Serializable {
+    public Message(String name, String payload) {
+        this(name, payload, Instant.now());
     }
 
     @Override
     public String toString() {
-        return DATE + " " + message + " -" + name;
+        return "%tD %s -%s".formatted(instant.atZone(ZoneId.systemDefault()), payload, name);
     }
-
 }
